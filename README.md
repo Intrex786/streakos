@@ -233,7 +233,7 @@ Pull requests are welcome.
 # Fork → clone → open in browser → edit index.html → test → PR
 git checkout -b feature/my-improvement
 # make changes to index.html
-git commit -m "feat: describe your change"
+git commit -m "feat: describe your improvement"
 git push origin feature/my-improvement
 # open a pull request on GitHub
 ```
