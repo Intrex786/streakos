@@ -10,6 +10,8 @@
   <meta property="og:description" content="Notion-inspired habit tracker with streaks, calendars, stats, and dark mode. Zero dependencies, pure vanilla JS." />
   <meta property="og:type" content="website" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -209,9 +211,85 @@
       outline: 2px solid transparent;
     }
     .profile-color-swatch.selected { outline-color: inherit; }
+
+    /* ══════════════════════════════════════════════
+       3D / INTERACTIVE FEATURE CSS
+    ══════════════════════════════════════════════ */
+
+    /* 3D tilt on table rows */
+    .habit-row {
+      transform-style: preserve-3d;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    /* Stats cards get a float + shadow hover */
+    .stat-card {
+      transition: transform 0.2s cubic-bezier(.34,1.56,.64,1), box-shadow 0.2s ease;
+    }
+    .stat-card:hover {
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 0 12px 32px rgba(59,130,246,0.18);
+    }
+
+    /* Calendar cells pop on hover */
+    .cal-cell {
+      transition: transform 0.15s cubic-bezier(.34,1.56,.64,1), box-shadow 0.15s ease !important;
+    }
+    .cal-cell:hover {
+      transform: scale(1.06) translateZ(0);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+      z-index: 5;
+    }
+
+    /* View tab indicator slides */
+    .view-tab { position: relative; }
+
+    /* Button press spring */
+    button:active { transform: scale(0.96); }
+
+    /* Orb tooltip */
+    #orb-tooltip {
+      position: fixed; pointer-events: none; z-index: 200;
+      background: rgba(15,23,42,0.85); color: white;
+      padding: 6px 12px; border-radius: 8px; font-size: 0.8rem;
+      backdrop-filter: blur(8px); white-space: nowrap;
+      opacity: 0; transition: opacity 0.2s ease;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    #orb-tooltip.visible { opacity: 1; }
+
+    /* 3D background canvas */
+    #bg3d {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    }
+
+    /* Ensure main UI sits above the canvas */
+    #sidebar, body > div.flex-1 {
+      position: relative; z-index: 1;
+    }
   </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 flex h-screen overflow-hidden">
+
+<!-- ── 3D Background Canvas ── -->
+<canvas id="bg3d"></canvas>
+
+<!-- ── Portal Overlay (tab transition flash) ── -->
+<div id="portal-overlay" style="position:fixed;inset:0;z-index:55;pointer-events:none;
+  background:radial-gradient(circle at center, rgba(99,102,241,0.35) 0%, transparent 70%);
+  opacity:0;"></div>
+
+<!-- ── Minimap ── -->
+<div id="minimap" style="position:fixed;bottom:24px;right:24px;z-index:100;
+  width:90px;height:90px;border-radius:50%;
+  background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.15);
+  backdrop-filter:blur(8px);overflow:hidden;cursor:pointer;"
+  title="Minimap — click to recenter">
+  <canvas id="minimapCanvas" width="90" height="90"></canvas>
+</div>
+
+<!-- ── Orb Tooltip ── -->
+<div id="orb-tooltip"></div>
 
 <!-- ═══════════════════════════════════════════════════ SIDEBAR ═══ -->
 <aside id="sidebar" class="flex flex-col bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shrink-0 overflow-hidden">
@@ -440,19 +518,19 @@
 
       <!-- Summary cards -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+        <div class="stat-card bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
           <p class="text-xs text-gray-400 mb-1 font-medium uppercase tracking-wide">Completed Today</p>
           <p id="statToday" class="text-2xl font-bold text-blue-500">–</p>
         </div>
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+        <div class="stat-card bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
           <p class="text-xs text-gray-400 mb-1 font-medium uppercase tracking-wide">7-day Rate</p>
           <p id="statRate" class="text-2xl font-bold text-emerald-500">–</p>
         </div>
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+        <div class="stat-card bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
           <p class="text-xs text-gray-400 mb-1 font-medium uppercase tracking-wide">Best Current Streak</p>
           <p id="statStreak" class="text-2xl font-bold text-violet-500">–</p>
         </div>
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+        <div class="stat-card bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
           <p class="text-xs text-gray-400 mb-1 font-medium uppercase tracking-wide">Total (30d)</p>
           <p id="statTotal" class="text-2xl font-bold text-orange-500">–</p>
         </div>
@@ -1071,6 +1149,8 @@ function applyTheme(theme) {
   st.classList.toggle('on', isDark);
   st.setAttribute('aria-checked', String(isDark));
   persistSettings();
+  // Sync 3D scene theme
+  if (window.APP3D) sync3DTheme(isDark);
 }
 
 function toggleTheme() {
@@ -1808,6 +1888,15 @@ function switchTab(tab) {
     document.getElementById(`view-${v}`).classList.toggle('hidden', v !== tab);
   });
   renderAll();
+  // 3D portal flash + zone transition
+  if (window.gsap) {
+    const overlay = document.getElementById('portal-overlay');
+    gsap.killTweensOf(overlay);
+    gsap.to(overlay, { opacity: 0.6, duration: 0.25, onComplete: () => {
+      gsap.to(overlay, { opacity: 0, duration: 0.35, delay: 0.1 });
+    }});
+  }
+  if (window.APP3D) transitionZone(tab);
 }
 
 function switchSubTab(sub) {
@@ -2017,6 +2106,7 @@ document.getElementById('habitTableBody').addEventListener('click', e => {
       persistHabits();
       renderTable();
       toast(`"${h.name}" archived`, 'info');
+      if (window.APP3D) removeHabitOrb(id);
     });
   } else if (editBtn) {
     openHabitModal(editBtn.dataset.id);
@@ -2028,9 +2118,12 @@ document.getElementById('habitTableBody').addEventListener('click', e => {
 // ── Table checkboxes (delegated) ──
 document.getElementById('habitTableBody').addEventListener('change', e => {
   if (e.target.classList.contains('today-check')) {
-    setCompletion(e.target.dataset.id, todayKey(), e.target.checked);
+    const hid = e.target.dataset.id;
+    setCompletion(hid, todayKey(), e.target.checked);
     // Re-render only streak/rate columns without full re-render for snappier UX
     renderTable();
+    // 3D orb pulse on checkin
+    if (window.APP3D) pulseOrb(hid);
   }
 });
 
@@ -2092,14 +2185,17 @@ document.getElementById('habitForm').addEventListener('submit', e => {
     const h = APP.habits.find(x => x.id === id);
     if (h) Object.assign(h, { name, emoji, frequency, weeklyGoal, colorTag, notes });
     toast(`"${name}" updated`, 'success');
+    if (window.APP3D) refreshOrbSize(id);
   } else {
-    APP.habits.push({
+    const newHabit = {
       id: 'h' + Date.now(),
       name, emoji, frequency, weeklyGoal, colorTag, notes,
       createdAt: new Date().toISOString(),
       archived: false,
-    });
+    };
+    APP.habits.push(newHabit);
     toast(`"${name}" added!`, 'success');
+    if (window.APP3D) addHabitOrb(newHabit);
   }
   persistHabits();
   closeModal('habitModal');
@@ -2274,7 +2370,555 @@ function trapFocus(modalId) {
 
   // Welcome toast
   toast('Welcome to StreakOS!', 'info');
+
+  // Kick off 3D after init completes
+  setTimeout(init3D, 0);
 })();
+
+// ================================================================
+// === 3D SCENE (Three.js + GSAP)
+// ================================================================
+
+function init3D() {
+  try {
+    if (typeof THREE === 'undefined') return;
+
+    const isDark = () => APP.settings.theme === 'dark';
+
+    // ── Renderer ──
+    const canvas = document.getElementById('bg3d');
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+
+    // ── Scene ──
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(isDark() ? 0x0f172a : 0xf8fafc, 0.015);
+
+    // ── Camera ──
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 30);
+
+    // ── Lights ──
+    const ambientLight = new THREE.AmbientLight(0xffffff, isDark() ? 0.25 : 0.5);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0x93c5fd, 0.8);
+    dirLight.position.set(10, 20, 10);
+    scene.add(dirLight);
+
+    const moodLight = new THREE.PointLight(0x8b5cf6, 1.2, 40);
+    moodLight.position.set(-10, 5, 5);
+    scene.add(moodLight);
+
+    // ── Orb group ──
+    const orbGroup = new THREE.Group();
+    scene.add(orbGroup);
+
+    // ── Particles ──
+    const particleCount = 300;
+    const particlePositions = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount; i++) {
+      const theta = Math.random() * Math.PI * 2;
+      const phi   = Math.acos(2 * Math.random() - 1);
+      const r     = 20 + Math.random() * 20;
+      particlePositions[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
+      particlePositions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      particlePositions[i * 3 + 2] = r * Math.cos(phi);
+    }
+    const particleGeo = new THREE.BufferGeometry();
+    particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    const particleMat = new THREE.PointsMaterial({
+      size: 0.08,
+      color: isDark() ? 0x334155 : 0xcbd5e1,
+      transparent: true, opacity: 0.7,
+    });
+    const particles = new THREE.Points(particleGeo, particleMat);
+    scene.add(particles);
+
+    // ── Easter Egg ──
+    const eggGeo = new THREE.IcosahedronGeometry(0.6, 0);
+    const eggMat = new THREE.MeshPhongMaterial({
+      color: 0xfbbf24, emissive: 0xfbbf24, emissiveIntensity: 0.5,
+      transparent: true, opacity: 0.9,
+    });
+    const eggMesh = new THREE.Mesh(eggGeo, eggMat);
+    eggMesh.position.set(25, -10, -15);
+    eggMesh.userData.isEasterEgg = true;
+    scene.add(eggMesh);
+
+    // ── Color map ──
+    const COLOR_MAP = {
+      blue:   0x3b82f6, purple: 0x8b5cf6, cyan:   0x06b6d4,
+      green:  0x22c55e, orange: 0xf97316, indigo: 0x6366f1,
+      pink:   0xec4899, red:    0xef4444,
+    };
+
+    // ── Orbs map: habitId → mesh ──
+    const orbsMap = new Map();
+
+    function randomSpherePoint(radius) {
+      const theta = Math.random() * Math.PI * 2;
+      const phi   = Math.acos(2 * Math.random() - 1);
+      const r     = radius * Math.cbrt(Math.random());
+      return new THREE.Vector3(
+        r * Math.sin(phi) * Math.cos(theta),
+        r * Math.sin(phi) * Math.sin(theta),
+        r * Math.cos(phi)
+      );
+    }
+
+    function createOrbMesh(habit) {
+      const streak = currentStreak(habit.id);
+      const radius = Math.min(1.2 + streak * 0.08, 2.5);
+      const hexColor = COLOR_MAP[habit.colorTag] || 0x3b82f6;
+      const geo = new THREE.IcosahedronGeometry(radius, 1);
+      const mat = new THREE.MeshPhongMaterial({
+        color: hexColor,
+        emissive: hexColor,
+        emissiveIntensity: 0.3,
+        wireframe: false,
+        transparent: true,
+        opacity: 0.85,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+
+      // Find a non-overlapping position
+      let pos;
+      let attempts = 0;
+      do {
+        pos = randomSpherePoint(18);
+        attempts++;
+      } while (attempts < 30 && [...orbsMap.values()].some(
+        m => m.position.distanceTo(pos) < 3
+      ));
+
+      mesh.position.copy(pos);
+      mesh.userData = {
+        habitId: habit.id,
+        baseY: pos.y,
+        floatSpeed: 0.3 + Math.random() * 0.5,
+        floatPhase: Math.random() * Math.PI * 2,
+        zoneTarget: pos.clone(),
+      };
+      return mesh;
+    }
+
+    function buildOrbs() {
+      // Remove existing orbs
+      orbsMap.forEach(m => orbGroup.remove(m));
+      orbsMap.clear();
+
+      liveHabits().forEach(habit => {
+        const mesh = createOrbMesh(habit);
+        orbGroup.add(mesh);
+        orbsMap.set(habit.id, mesh);
+      });
+    }
+
+    buildOrbs();
+
+    // ── Mouse tracking ──
+    let mouseX = 0, mouseY = 0;
+    let targetRotY = 0;
+    const camTarget = new THREE.Vector3(0, 0, 30);
+
+    document.addEventListener('mousemove', e => {
+      mouseX = (e.clientX / window.innerWidth)  * 2 - 1;
+      mouseY = (e.clientY / window.innerHeight) * 2 - 1;
+      camTarget.set(mouseX * 4, -mouseY * 2, 30);
+      targetRotY = mouseX * 0.15;
+
+      // Raycaster for hover
+      if (!window.APP3D) return;
+      raycasterHover(e.clientX, e.clientY);
+    });
+
+    // ── Raycaster ──
+    const raycaster = new THREE.Raycaster();
+    const mouse2D   = new THREE.Vector2();
+    let   hoveredOrb = null;
+    const tooltip = document.getElementById('orb-tooltip');
+
+    function getIntersects(clientX, clientY) {
+      mouse2D.x =  (clientX / window.innerWidth)  * 2 - 1;
+      mouse2D.y = -(clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse2D, camera);
+      const allMeshes = [];
+      orbsMap.forEach(m => allMeshes.push(m));
+      allMeshes.push(eggMesh);
+      return raycaster.intersectObjects(allMeshes);
+    }
+
+    function raycasterHover(clientX, clientY) {
+      const hits = getIntersects(clientX, clientY);
+      const hit  = hits.length ? hits[0].object : null;
+
+      if (hit !== hoveredOrb) {
+        // Un-hover previous
+        if (hoveredOrb && !hoveredOrb.userData.isEasterEgg) {
+          if (window.gsap) {
+            gsap.to(hoveredOrb.scale, { x:1, y:1, z:1, duration:0.3 });
+            gsap.to(hoveredOrb.material, { emissiveIntensity:0.3, duration:0.3 });
+          }
+        }
+        hoveredOrb = hit;
+        // Hover new
+        if (hoveredOrb && !hoveredOrb.userData.isEasterEgg) {
+          if (window.gsap) {
+            gsap.to(hoveredOrb.scale, { x:1.25, y:1.25, z:1.25, duration:0.3, ease:'elastic.out(1,0.5)' });
+            gsap.to(hoveredOrb.material, { emissiveIntensity:0.7, duration:0.3 });
+          }
+          // Show tooltip
+          const habit = APP.habits.find(h => h.id === hoveredOrb.userData.habitId);
+          if (habit) {
+            const streak = currentStreak(habit.id);
+            tooltip.textContent = `${habit.emoji} ${habit.name}  🔥 ${streak} days`;
+            tooltip.classList.add('visible');
+          }
+        } else if (!hoveredOrb) {
+          tooltip.classList.remove('visible');
+        }
+      }
+
+      // Move tooltip near cursor
+      if (hoveredOrb && !hoveredOrb.userData.isEasterEgg) {
+        tooltip.style.left = (clientX + 16) + 'px';
+        tooltip.style.top  = (clientY - 10) + 'px';
+      }
+    }
+
+    // Click raycasting
+    document.addEventListener('click', e => {
+      if (!window.APP3D) return;
+      // Only raycast if click wasn't inside the 2D sidebar/main/modal UI
+      const sidebar = document.getElementById('sidebar');
+      const mainDiv = document.querySelector('body > div.flex-1');
+      const modals  = ['habitModal','settingsModal','confirmModal','profileModal','dayDrawer'];
+      const insideUI = (sidebar && sidebar.contains(e.target)) ||
+                       (mainDiv  && mainDiv.contains(e.target))  ||
+                       modals.some(id => {
+                         const el = document.getElementById(id);
+                         return el && el.contains(e.target);
+                       });
+      if (insideUI) return;
+
+      const hits = getIntersects(e.clientX, e.clientY);
+      if (!hits.length) return;
+
+      const mesh = hits[0].object;
+
+      if (mesh.userData.isEasterEgg) {
+        handleEasterEggClick(mesh);
+        return;
+      }
+
+      if (mesh.userData.habitId) {
+        // Open the day drawer for today and scroll/highlight that habit
+        openDrawer(todayKey());
+        setTimeout(() => {
+          const drawerList = document.getElementById('drawerHabitList');
+          if (!drawerList) return;
+          const labels = drawerList.querySelectorAll('label');
+          labels.forEach(label => {
+            const cb = label.querySelector('input[data-id="' + mesh.userData.habitId + '"]');
+            if (cb) {
+              label.style.background = 'rgba(59,130,246,0.15)';
+              label.scrollIntoView({ behavior:'smooth', block:'nearest' });
+              setTimeout(() => { label.style.background = ''; }, 1500);
+            }
+          });
+        }, 100);
+      }
+    });
+
+    // ── Easter Egg ──
+    function handleEasterEggClick(mesh) {
+      // Particle burst
+      const burstColors = [0xff6b6b, 0xffd93d, 0x6bcb77, 0x4d96ff, 0xc77dff];
+      for (let i = 0; i < 80; i++) {
+        const bGeo = new THREE.SphereGeometry(0.08, 4, 4);
+        const bMat = new THREE.MeshBasicMaterial({
+          color: burstColors[Math.floor(Math.random() * burstColors.length)],
+          transparent: true, opacity: 1,
+        });
+        const b = new THREE.Mesh(bGeo, bMat);
+        b.position.copy(mesh.position);
+        scene.add(b);
+
+        if (window.gsap) {
+          const tx = mesh.position.x + (Math.random() - 0.5) * 20;
+          const ty = mesh.position.y + (Math.random() - 0.5) * 20;
+          const tz = mesh.position.z + (Math.random() - 0.5) * 20;
+          gsap.to(b.position, { x:tx, y:ty, z:tz, duration: 0.8 + Math.random() * 0.6, ease:'power2.out' });
+          gsap.to(bMat, { opacity:0, duration:0.8 + Math.random()*0.6, delay:0.3,
+            onComplete: () => { scene.remove(b); bGeo.dispose(); bMat.dispose(); }
+          });
+        }
+      }
+
+      // Toast
+      toast('🥚 You found the Easter egg! Streak Wizard unlocked!', 'success');
+
+      // Count
+      let count = parseInt(localStorage.getItem('ht2_easter_egg_count') || '0', 10) + 1;
+      localStorage.setItem('ht2_easter_egg_count', String(count));
+      if (count >= 3) {
+        setTimeout(() => toast('🏆 Easter Egg Master!', 'success'), 1000);
+      }
+
+      // Hide egg, respawn at new position after 60s
+      mesh.visible = false;
+      setTimeout(() => {
+        const p = randomSpherePoint(30);
+        p.z = -15 + (Math.random() - 0.5) * 10;
+        mesh.position.copy(p);
+        mesh.visible = true;
+      }, 60000);
+    }
+
+    // ── Zone transitions ──
+    function transitionZone(tab) {
+      if (!window.gsap) return;
+      let i = 0;
+      orbsMap.forEach((mesh, habitId) => {
+        let target;
+        if (tab === 'table') {
+          // Loose grid
+          const col = i % 4, row = Math.floor(i / 4);
+          target = { x: (col - 1.5) * 5, y: (row - 1) * 4 + 2, z: (Math.random() - 0.5) * 6 };
+        } else if (tab === 'calendar') {
+          // Circular orbit ring
+          const angle = (i / orbsMap.size) * Math.PI * 2;
+          const r = 10 + (i % 3) * 2;
+          target = { x: Math.cos(angle) * r, y: Math.sin(angle) * r * 0.5, z: (Math.random() - 0.5) * 4 };
+        } else if (tab === 'stats') {
+          // Vertical bar chart columns
+          const col = i % 5;
+          const bar = Math.floor(i / 5);
+          target = { x: (col - 2) * 4, y: bar * 2 - 4, z: (Math.random() - 0.5) * 4 };
+        }
+        if (target) {
+          mesh.userData.zoneTarget = new THREE.Vector3(target.x, target.y, target.z);
+          mesh.userData.baseY = target.y;
+          gsap.to(mesh.position, { x: target.x, y: target.y, z: target.z, duration: 1.2, ease: 'power3.out' });
+        }
+        i++;
+      });
+
+      // Animate fog density
+      const fogTarget = tab === 'table' ? 0.012 : tab === 'calendar' ? 0.018 : 0.010;
+      if (window.gsap) {
+        gsap.to(scene.fog, { density: fogTarget, duration: 1.2 });
+      }
+    }
+    window.transitionZone = transitionZone;
+
+    // ── Theme sync ──
+    function sync3DTheme(dark) {
+      const bgColor  = dark ? 0x0f172a : 0xf8fafc;
+      const pColor   = dark ? 0x334155 : 0xcbd5e1;
+      const ambInt   = dark ? 0.25 : 0.5;
+
+      if (window.gsap) {
+        gsap.to(ambientLight, { intensity: ambInt, duration: 0.5 });
+      } else {
+        ambientLight.intensity = ambInt;
+      }
+      scene.fog.color.set(bgColor);
+      particleMat.color.set(pColor);
+    }
+    window.sync3DTheme = sync3DTheme;
+
+    // ── Orb update functions ──
+    function pulseOrb(habitId) {
+      const mesh = orbsMap.get(habitId);
+      if (!mesh || !window.gsap) return;
+      gsap.killTweensOf(mesh.scale);
+      gsap.timeline()
+        .to(mesh.scale, { x:1.5, y:1.5, z:1.5, duration:0.15, ease:'power2.out' })
+        .to(mesh.scale, { x:1.0, y:1.0, z:1.0, duration:0.25, ease:'bounce.out' });
+      gsap.timeline()
+        .to(mesh.material, { emissiveIntensity:1.0, duration:0.15 })
+        .to(mesh.material, { emissiveIntensity:0.3, duration:0.25 });
+    }
+    window.pulseOrb = pulseOrb;
+
+    function refreshOrbSize(habitId) {
+      const mesh = orbsMap.get(habitId);
+      if (!mesh) return;
+      const habit = APP.habits.find(h => h.id === habitId);
+      if (!habit) return;
+      const streak = currentStreak(habitId);
+      const radius = Math.min(1.2 + streak * 0.08, 2.5);
+      mesh.geometry.dispose();
+      mesh.geometry = new THREE.IcosahedronGeometry(radius, 1);
+    }
+    window.refreshOrbSize = refreshOrbSize;
+
+    function addHabitOrb(habit) {
+      if (orbsMap.has(habit.id)) return;
+      const mesh = createOrbMesh(habit);
+      mesh.scale.set(0, 0, 0);
+      orbGroup.add(mesh);
+      orbsMap.set(habit.id, mesh);
+      if (window.gsap) {
+        gsap.to(mesh.scale, { x:1, y:1, z:1, duration:0.5, ease:'back.out(1.5)' });
+      }
+    }
+    window.addHabitOrb = addHabitOrb;
+
+    function removeHabitOrb(habitId) {
+      const mesh = orbsMap.get(habitId);
+      if (!mesh) return;
+      if (window.gsap) {
+        gsap.to(mesh.scale, { x:0, y:0, z:0, duration:0.4, ease:'power2.in',
+          onComplete: () => { orbGroup.remove(mesh); orbsMap.delete(habitId); }
+        });
+      } else {
+        orbGroup.remove(mesh);
+        orbsMap.delete(habitId);
+      }
+    }
+    window.removeHabitOrb = removeHabitOrb;
+
+    // ── Minimap ──
+    const minimapCanvas = document.getElementById('minimapCanvas');
+    const minimapCtx    = minimapCanvas.getContext('2d');
+
+    document.getElementById('minimap').addEventListener('click', () => {
+      if (window.gsap) {
+        gsap.to(camera.position, { x:0, y:0, z:30, duration:1.0, ease:'power2.out' });
+      } else {
+        camera.position.set(0, 0, 30);
+      }
+    });
+
+    function drawMinimap() {
+      const W = 90, H = 90, CX = 45, CY = 45, SCALE = 1.8;
+      minimapCtx.clearRect(0, 0, W, H);
+
+      // Dark bg circle
+      minimapCtx.beginPath();
+      minimapCtx.arc(CX, CY, 44, 0, Math.PI * 2);
+      minimapCtx.fillStyle = 'rgba(0,0,0,0.4)';
+      minimapCtx.fill();
+
+      // Zone ring color
+      const zoneColor = APP.currentTab === 'table' ? '#3b82f6' :
+                        APP.currentTab === 'calendar' ? '#8b5cf6' : '#f97316';
+      minimapCtx.beginPath();
+      minimapCtx.arc(CX, CY, 43, 0, Math.PI * 2);
+      minimapCtx.strokeStyle = zoneColor;
+      minimapCtx.lineWidth = 2;
+      minimapCtx.globalAlpha = 0.6;
+      minimapCtx.stroke();
+      minimapCtx.globalAlpha = 1;
+
+      // Habit orb dots
+      orbsMap.forEach((mesh, habitId) => {
+        const habit = APP.habits.find(h => h.id === habitId);
+        const color = '#' + ('000000' + (COLOR_MAP[habit ? habit.colorTag : 'blue'] || 0x3b82f6).toString(16)).slice(-6);
+        const mx = CX + (mesh.position.x / 18) * 30;
+        const my = CY - (mesh.position.y / 18) * 30;
+        minimapCtx.beginPath();
+        minimapCtx.arc(mx, my, 4, 0, Math.PI * 2);
+        minimapCtx.fillStyle = color;
+        minimapCtx.fill();
+      });
+
+      // Camera crosshair
+      const cx2 = CX + (camera.position.x / 18) * 30;
+      const cy2 = CY - (camera.position.y / 18) * 30;
+      minimapCtx.beginPath();
+      minimapCtx.arc(cx2, cy2, 3, 0, Math.PI * 2);
+      minimapCtx.fillStyle = 'white';
+      minimapCtx.fill();
+    }
+
+    // ── Habit row tilt effect ──
+    function attachRowTilt() {
+      document.querySelectorAll('.habit-row').forEach(row => {
+        row.addEventListener('mousemove', e => {
+          const rect = row.getBoundingClientRect();
+          const rx = ((e.clientY - rect.top)  / rect.height - 0.5) * -8;
+          const ry = ((e.clientX - rect.left) / rect.width  - 0.5) *  5;
+          row.style.transform = `perspective(600px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+        });
+        row.addEventListener('mouseleave', () => {
+          row.style.transform = '';
+        });
+      });
+    }
+
+    // Attach on each table render (observe mutations on habitTableBody)
+    const tiltObserver = new MutationObserver(() => attachRowTilt());
+    tiltObserver.observe(document.getElementById('habitTableBody'), { childList: true });
+    attachRowTilt();
+
+    // ── Resize handler ──
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // ── Animation loop ──
+    let clock = 0;
+    function animate() {
+      requestAnimationFrame(animate);
+      clock += 0.016;
+
+      // Camera inertia
+      camera.position.lerp(camTarget, 0.04);
+
+      // Orb group rotation
+      orbGroup.rotation.y += (targetRotY - orbGroup.rotation.y) * 0.02;
+
+      // Orb float
+      orbsMap.forEach(mesh => {
+        const ud = mesh.userData;
+        if (ud.baseY !== undefined) {
+          mesh.position.y = ud.baseY + Math.sin(clock * ud.floatSpeed + ud.floatPhase) * 0.4;
+        }
+      });
+
+      // Rotate egg
+      eggMesh.rotation.x += 0.007;
+      eggMesh.rotation.y += 0.011;
+      eggMesh.rotation.z += 0.005;
+
+      // Particle slow rotation
+      particles.rotation.y += 0.0002;
+
+      // Draw minimap
+      drawMinimap();
+
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // ── Expose global ──
+    window.APP3D = {
+      scene, camera, renderer,
+      orbs: orbsMap,
+      orbGroup, particles,
+      ambientLight, dirLight, moodLight,
+      buildOrbs,
+    };
+
+    // Initial theme sync
+    sync3DTheme(isDark());
+
+    // Initial zone
+    transitionZone(APP.currentTab);
+
+  } catch (err) {
+    // WebGL unavailable or error — app still works fine
+    console.warn('3D scene init failed (non-critical):', err);
+  }
+}
 </script>
 </body>
 </html>
