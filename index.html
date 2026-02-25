@@ -2388,7 +2388,8 @@ document.getElementById('calWeekendsCheck').addEventListener('change', e => {
 // ── Search ──
 document.getElementById('searchInput').addEventListener('input', e => {
   APP.searchQuery = e.target.value;
-  if (APP.currentTab === 'table') renderTable();
+  if (APP.currentNavView === 'dashboard') renderDashboard();
+  else if (APP.currentTab === 'table') renderTable();
 });
 
 // ── Header theme toggle ──
@@ -3253,7 +3254,7 @@ const MOTIVATIONS = [
 
 function renderDashboard() {
   const today = todayKey();
-  const activeHabits = APP.habits.filter(h => !h.archived);
+  const activeHabits = displayHabits();
   const dayData = APP.checkins[today] || { completed: {}, note: '' };
 
   // ── Greeting ──
