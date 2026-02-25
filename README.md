@@ -9,9 +9,32 @@
 
 ---
 
-## Screenshot
+## 🚀 Try it Live
 
-![StreakOS Screenshot](https://raw.githubusercontent.com/Intrex786/streakos/main/preview.png)
+<div align="center">
+
+### [→ intrex786.github.io/streakos](https://intrex786.github.io/streakos/)
+
+*No installation required — opens instantly in any modern browser.*
+
+</div>
+
+---
+
+## Preview
+
+<div align="center">
+  <a href="https://intrex786.github.io/streakos/" target="_blank" title="Open StreakOS live demo">
+    <img
+      src="https://image.thum.io/get/width/1280/crop/840/noanimate/https://intrex786.github.io/streakos/"
+      alt="StreakOS — live preview"
+      width="100%"
+      style="border-radius:10px; border:1px solid #e5e7eb;"
+    />
+  </a>
+  <br/>
+  <sub>↑ Click the preview to open the live app</sub>
+</div>
 
 ---
 
@@ -35,27 +58,26 @@
 
 ---
 
-## Live Demo
-
-**[https://intrex786.github.io/streakos/](https://intrex786.github.io/streakos/)**
-
----
-
 ## Getting Started
 
-### Option 1 — Open directly (zero setup)
+### Option 1 — Open in browser instantly (zero setup)
+
+**[→ Click here to open the live app](https://intrex786.github.io/streakos/)**
+
+Or clone and open locally:
 
 ```bash
-# Clone the repo
 git clone https://github.com/Intrex786/streakos.git
+cd streakos
 
-# Open in your browser
-open streakos/index.html
-# or on Windows:
-start streakos/index.html
+# macOS / Linux
+open index.html
+
+# Windows
+start index.html
 ```
 
-No server needed. The app runs entirely from the file.
+No server needed. The app runs entirely from the single file.
 
 ### Option 2 — Serve locally (recommended for file imports)
 
