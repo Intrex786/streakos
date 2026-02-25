@@ -267,6 +267,170 @@
     #sidebar, body > div.flex-1 {
       position: relative; z-index: 1;
     }
+
+    /* ── Quantum Dashboard ── */
+    .quantum-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 16px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .quantum-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at top left, rgba(99,102,241,0.07) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .quantum-card:hover {
+      border-color: rgba(99, 102, 241, 0.45);
+      box-shadow: 0 0 30px rgba(99, 102, 241, 0.12), inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+    /* Light mode quantum card */
+    html:not(.dark) .quantum-card {
+      background: rgba(255,255,255,0.85);
+      border-color: rgba(99,102,241,0.18);
+    }
+    html:not(.dark) .quantum-card:hover {
+      box-shadow: 0 8px 32px rgba(99,102,241,0.15);
+    }
+
+    .quantum-text {
+      background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .quantum-text-orange {
+      background: linear-gradient(135deg, #fb923c, #ef4444);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Quantum metric cards */
+    .quantum-metric-card {
+      background: rgba(15,23,42,0.55);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+      cursor: default;
+      transition: transform 0.2s cubic-bezier(.34,1.56,.64,1), box-shadow 0.2s ease;
+    }
+    html:not(.dark) .quantum-metric-card {
+      background: rgba(255,255,255,0.9);
+      border-color: rgba(99,102,241,0.15);
+    }
+    .quantum-metric-card:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+    }
+    .qm-icon { font-size: 1.4rem; margin-bottom: 8px; }
+    .qm-val {
+      font-size: 1.75rem; font-weight: 800; color: #f1f5f9;
+      font-variant-numeric: tabular-nums;
+    }
+    html:not(.dark) .qm-val { color: #1e293b; }
+    .qm-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-top: 2px; }
+    .qm-glow-line {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 3px; opacity: 0.8;
+      transition: opacity 0.3s;
+    }
+    .quantum-metric-card:hover .qm-glow-line { opacity: 1; }
+    .quantum-metric-card[data-color="blue"]    .qm-val { color: #60a5fa; }
+    .quantum-metric-card[data-color="emerald"] .qm-val { color: #34d399; }
+    .quantum-metric-card[data-color="violet"]  .qm-val { color: #a78bfa; }
+    .quantum-metric-card[data-color="orange"]  .qm-val { color: #fb923c; }
+
+    /* Habit orbit ring */
+    .orbit-ring-wrap {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      cursor: pointer;
+      transition: transform 0.2s cubic-bezier(.34,1.56,.64,1);
+    }
+    .orbit-ring-wrap:hover { transform: scale(1.08); }
+    .orbit-ring-wrap:hover .orbit-emoji { transform: scale(1.15); }
+    .orbit-emoji {
+      font-size: 1.3rem; line-height:1;
+      transition: transform 0.2s cubic-bezier(.34,1.56,.64,1);
+    }
+    .orbit-name {
+      font-size: 0.65rem; color: #94a3b8; text-align: center;
+      max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .orbit-done-badge {
+      position: absolute; top: -2px; right: -2px;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #22c55e; border: 2px solid #0f172a;
+      font-size: 8px; display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 700;
+    }
+    html:not(.dark) .orbit-done-badge { border-color: white; }
+
+    /* Pulse heatmap cell */
+    .pulse-cell {
+      width: 18px; height: 18px; border-radius: 4px;
+      cursor: pointer; transition: transform 0.15s ease;
+      position: relative;
+    }
+    .pulse-cell:hover { transform: scale(1.4); z-index: 10; }
+
+    /* Leaderboard row */
+    .lb-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; border-radius: 10px;
+      transition: background 0.15s;
+    }
+    .lb-row:hover { background: rgba(99,102,241,0.08); }
+    .lb-rank { font-size: 0.75rem; font-weight: 700; color: #64748b; width: 18px; flex-shrink: 0; }
+    .lb-rank.gold   { color: #fbbf24; }
+    .lb-rank.silver { color: #94a3b8; }
+    .lb-rank.bronze { color: #f97316; }
+    .lb-streak { font-size: 0.8rem; font-weight: 700; color: #f1f5f9; margin-left: auto; white-space: nowrap; }
+    html:not(.dark) .lb-streak { color: #1e293b; }
+
+    /* Activity feed item */
+    .feed-item {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 0.8rem; color: #94a3b8;
+      padding: 5px 8px; border-radius: 8px;
+      transition: background 0.15s;
+    }
+    .feed-item:hover { background: rgba(99,102,241,0.06); }
+    .feed-dot {
+      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    }
+
+    /* Greeting time of day */
+    #db-greeting { line-height: 1.2; }
+
+    /* Floating number counter animation */
+    @keyframes countUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .counter-animate { animation: countUp 0.5s ease forwards; }
+
+    /* SVG ring pulse for 100% */
+    @keyframes ringPulse {
+      0%, 100% { filter: drop-shadow(0 0 4px rgba(99,102,241,0.6)); }
+      50%       { filter: drop-shadow(0 0 14px rgba(6,182,212,0.9)); }
+    }
+    .ring-complete { animation: ringPulse 2s ease infinite; }
+
+    /* Streak flame pulse */
+    @keyframes flamePulse {
+      0%, 100% { text-shadow: 0 0 8px rgba(251,146,60,0.5); }
+      50%       { text-shadow: 0 0 20px rgba(251,146,60,0.9); }
+    }
+    .streak-active { animation: flamePulse 1.5s ease infinite; }
   </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 flex h-screen overflow-hidden">
@@ -422,7 +586,7 @@
   </header>
 
   <!-- ── VIEW TABS ── -->
-  <div class="flex items-center gap-5 px-5 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shrink-0" role="tablist" aria-label="View tabs">
+  <div id="viewTabBar" class="flex items-center gap-5 px-5 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shrink-0" role="tablist" aria-label="View tabs">
     <button class="view-tab active" data-tab="table" role="tab" aria-selected="true" aria-controls="view-table">Table</button>
     <button class="view-tab" data-tab="calendar" role="tab" aria-selected="false" aria-controls="view-calendar">Calendar</button>
     <button class="view-tab" data-tab="stats" role="tab" aria-selected="false" aria-controls="view-stats">Stats</button>
@@ -564,6 +728,137 @@
         <div id="mostConsistentList" class="space-y-2.5"></div>
       </div>
     </div>
+
+
+<!-- ─────────── DASHBOARD VIEW ─────────── -->
+<div id="view-dashboard" class="hidden p-5 space-y-6" role="tabpanel">
+
+  <!-- Row 1: Greeting + Today's master ring -->
+  <div class="flex flex-col lg:flex-row gap-5 items-stretch">
+
+    <!-- Greeting card -->
+    <div class="quantum-card flex-1 p-6 flex flex-col justify-between min-h-[160px]">
+      <div>
+        <p class="text-xs font-semibold tracking-widest uppercase text-blue-400 mb-1">Good morning</p>
+        <h2 id="db-greeting" class="text-2xl font-bold quantum-text mb-1">Habit Builder</h2>
+        <p id="db-date" class="text-sm text-gray-400"></p>
+      </div>
+      <div id="db-motivation" class="text-sm text-gray-400 italic mt-3 border-l-2 border-blue-500/40 pl-3"></div>
+    </div>
+
+    <!-- Today's completion ring -->
+    <div class="quantum-card p-6 flex flex-col items-center justify-center gap-3 min-w-[200px]">
+      <div class="relative w-32 h-32">
+        <svg viewBox="0 0 120 120" class="w-full h-full -rotate-90">
+          <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(99,102,241,0.12)" stroke-width="10"/>
+          <circle id="db-ring-fill" cx="60" cy="60" r="52" fill="none"
+            stroke="url(#ringGrad)" stroke-width="10"
+            stroke-linecap="round"
+            stroke-dasharray="326.73"
+            stroke-dashoffset="326.73"
+            style="transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)"/>
+          <defs>
+            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#6366f1"/>
+              <stop offset="100%" stop-color="#06b6d4"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <span id="db-ring-pct" class="text-2xl font-bold quantum-text">0%</span>
+          <span class="text-xs text-gray-400">today</span>
+        </div>
+      </div>
+      <p class="text-sm text-gray-400"><span id="db-done-count" class="font-semibold text-white">0</span> / <span id="db-total-count">0</span> habits</p>
+    </div>
+
+    <!-- Streak pulse card -->
+    <div class="quantum-card p-6 flex flex-col justify-between min-w-[160px]">
+      <p class="text-xs font-semibold tracking-widest uppercase text-violet-400 mb-3">Top Streak</p>
+      <div>
+        <div id="db-top-streak-name" class="text-sm font-medium text-gray-300 mb-1 truncate">—</div>
+        <div class="flex items-end gap-2">
+          <span id="db-top-streak-val" class="text-4xl font-black quantum-text-orange counter">0</span>
+          <span class="text-sm text-gray-400 mb-1">days 🔥</span>
+        </div>
+      </div>
+      <div id="db-streak-bar" class="mt-3 h-1.5 rounded-full bg-gray-700 overflow-hidden">
+        <div id="db-streak-bar-fill" class="h-full rounded-full bg-gradient-to-r from-orange-400 to-red-500 transition-all duration-1000" style="width:0%"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Row 2: 4 quantum metric cards -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="quantum-metric-card" data-color="blue">
+      <div class="qm-icon">📅</div>
+      <div class="qm-val counter" id="qm-today">0</div>
+      <div class="qm-label">Done Today</div>
+      <div class="qm-glow-line bg-blue-500"></div>
+    </div>
+    <div class="quantum-metric-card" data-color="emerald">
+      <div class="qm-icon">📈</div>
+      <div class="qm-val" id="qm-rate">0%</div>
+      <div class="qm-label">7-day Rate</div>
+      <div class="qm-glow-line bg-emerald-500"></div>
+    </div>
+    <div class="quantum-metric-card" data-color="violet">
+      <div class="qm-icon">🔥</div>
+      <div class="qm-val counter" id="qm-streak">0</div>
+      <div class="qm-label">Best Streak</div>
+      <div class="qm-glow-line bg-violet-500"></div>
+    </div>
+    <div class="quantum-metric-card" data-color="orange">
+      <div class="qm-icon">⚡</div>
+      <div class="qm-val counter" id="qm-month">0</div>
+      <div class="qm-label">This Month</div>
+      <div class="qm-glow-line bg-orange-500"></div>
+    </div>
+  </div>
+
+  <!-- Row 3: Habit orbit rings -->
+  <div class="quantum-card p-5">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-sm font-semibold text-gray-200 tracking-wide">Habit Orbits — 7-day momentum</h3>
+      <span class="text-xs text-gray-500">Click to track today</span>
+    </div>
+    <div id="db-orbit-grid" class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-4"></div>
+  </div>
+
+  <!-- Row 4: 30-day pulse heatmap + streak leaderboard -->
+  <div class="flex flex-col lg:flex-row gap-5">
+
+    <!-- Pulse heatmap -->
+    <div class="quantum-card flex-1 p-5">
+      <h3 class="text-sm font-semibold text-gray-200 mb-4 tracking-wide">Activity Pulse — 30 days</h3>
+      <div id="db-pulse-heatmap" class="flex gap-1 flex-wrap"></div>
+      <div class="flex items-center gap-2 mt-3 text-xs text-gray-500">
+        <span>Less</span>
+        <div class="w-3 h-3 rounded-sm bg-gray-700"></div>
+        <div class="w-3 h-3 rounded-sm" style="background:rgba(99,102,241,0.3)"></div>
+        <div class="w-3 h-3 rounded-sm" style="background:rgba(99,102,241,0.6)"></div>
+        <div class="w-3 h-3 rounded-sm bg-indigo-500"></div>
+        <div class="w-3 h-3 rounded-sm" style="background:linear-gradient(135deg,#6366f1,#06b6d4)"></div>
+        <span>More</span>
+      </div>
+    </div>
+
+    <!-- Streak leaderboard -->
+    <div class="quantum-card p-5 w-full lg:w-72">
+      <h3 class="text-sm font-semibold text-gray-200 mb-4 tracking-wide">🏆 Streak Leaders</h3>
+      <div id="db-leaderboard" class="space-y-3"></div>
+    </div>
+
+  </div>
+
+  <!-- Row 5: Recent activity feed -->
+  <div class="quantum-card p-5">
+    <h3 class="text-sm font-semibold text-gray-200 mb-4 tracking-wide">⚡ Recent Activity</h3>
+    <div id="db-activity-feed" class="space-y-2 max-h-48 overflow-y-auto"></div>
+  </div>
+
+</div>
 
   </main>
 </div><!-- end #main -->
@@ -920,6 +1215,7 @@ const APP = {
   profile:  { name: 'Habit User', initials: 'HU', avatarColor: '#3b82f6', avatarType: 'initials', avatarImage: null },
 
   // UI state
+  currentNavView: 'dashboard',
   currentTab:    'table',
   currentSubTab: 'month',
   sortCol:       'name',
@@ -1772,6 +2068,7 @@ function startInlineEdit(spanEl, habitId, field) {
 
 // ─── MASTER RENDER ───────────────────────────────────────────
 function renderAll() {
+  if (APP.currentNavView === 'dashboard') { renderDashboard(); return; }
   if (APP.currentTab === 'table')    renderTable();
   if (APP.currentTab === 'calendar') renderCalendar();
   if (APP.currentTab === 'stats')    renderStats();
@@ -1922,8 +2219,27 @@ function switchNav(view) {
     el.classList.toggle('active', el.dataset.view === view);
     el.setAttribute('aria-current', el.dataset.view === view ? 'page' : 'false');
   });
-  const MAP = { dashboard: 'table', habits: 'table', calendar: 'calendar', analytics: 'stats' };
-  if (MAP[view]) switchTab(MAP[view]);
+
+  const tabBar = document.getElementById('viewTabBar');
+  const viewDashboard = document.getElementById('view-dashboard');
+
+  if (view === 'dashboard') {
+    APP.currentNavView = 'dashboard';
+    if (tabBar) tabBar.classList.add('hidden');
+    if (viewDashboard) viewDashboard.classList.remove('hidden');
+    ['table', 'calendar', 'stats'].forEach(v => {
+      const el = document.getElementById('view-' + v);
+      if (el) el.classList.add('hidden');
+    });
+    renderDashboard();
+  } else {
+    APP.currentNavView = view;
+    if (tabBar) tabBar.classList.remove('hidden');
+    if (viewDashboard) viewDashboard.classList.add('hidden');
+    if (view === 'habits')    switchTab('table');
+    if (view === 'calendar')  switchTab('calendar');
+    if (view === 'analytics') switchTab('stats');
+  }
 }
 
 // ================================================================
@@ -2365,8 +2681,8 @@ function trapFocus(modalId) {
   // Render avatar from saved profile
   renderAvatar();
 
-  // Initial render
-  renderAll();
+  // Initial render — start on dashboard
+  switchNav('dashboard');
 
   // Welcome toast
   toast('Welcome to StreakOS!', 'info');
@@ -2918,6 +3234,309 @@ function init3D() {
     // WebGL unavailable or error — app still works fine
     console.warn('3D scene init failed (non-critical):', err);
   }
+}
+
+// ================================================================
+// === DASHBOARD RENDERER ===
+// ================================================================
+
+const MOTIVATIONS = [
+  "Small steps every day build extraordinary results.",
+  "The secret of getting ahead is getting started.",
+  "Discipline is choosing what you want most over what you want now.",
+  "You don't rise to the level of your goals, you fall to the level of your systems.",
+  "Every habit is a vote for the type of person you want to become.",
+  "Progress, not perfection.",
+  "Consistency is the hallmark of the undefeated.",
+  "Success is the sum of small efforts repeated day in and day out."
+];
+
+function renderDashboard() {
+  const today = todayKey();
+  const activeHabits = APP.habits.filter(h => !h.archived);
+  const dayData = APP.checkins[today] || { completed: {}, note: '' };
+
+  // ── Greeting ──
+  const hour = new Date().getHours();
+  const greetWord = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const greetEl = document.getElementById('db-greeting');
+  if (greetEl) greetEl.textContent = APP.profile?.name || 'Habit Builder';
+  // update the static label above
+  const greetLabel = greetEl?.previousElementSibling;
+  if (greetLabel) greetLabel.textContent = greetWord + ',';
+
+  // Date string
+  const dateEl = document.getElementById('db-date');
+  if (dateEl) {
+    const d = new Date();
+    dateEl.textContent = d.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  }
+
+  // Motivation
+  const motEl = document.getElementById('db-motivation');
+  if (motEl) {
+    const idx = new Date().getDay() % MOTIVATIONS.length;
+    motEl.textContent = '"' + MOTIVATIONS[idx] + '"';
+  }
+
+  // ── Today completion ──
+  const doneToday = activeHabits.filter(h => dayData.completed[h.id]).length;
+  const totalActive = activeHabits.length;
+  const pct = totalActive > 0 ? Math.round((doneToday / totalActive) * 100) : 0;
+
+  const ringFill = document.getElementById('db-ring-fill');
+  if (ringFill) {
+    const circ = 326.73;
+    const offset = circ - (pct / 100) * circ;
+    requestAnimationFrame(() => { ringFill.style.strokeDashoffset = offset; });
+    if (pct === 100) ringFill.closest('svg')?.classList.add('ring-complete');
+    else ringFill.closest('svg')?.classList.remove('ring-complete');
+  }
+  const ringPctEl = document.getElementById('db-ring-pct');
+  if (ringPctEl) animateCounter(ringPctEl, pct, '%');
+  setTextSafe('db-done-count', doneToday);
+  setTextSafe('db-total-count', totalActive);
+
+  // ── Top streak ──
+  let topH = null, topS = 0;
+  activeHabits.forEach(h => {
+    const s = currentStreak(h.id);
+    if (s > topS) { topS = s; topH = h; }
+  });
+  setTextSafe('db-top-streak-name', topH ? topH.emoji + ' ' + topH.name : '—');
+  const topStreakEl = document.getElementById('db-top-streak-val');
+  if (topStreakEl) {
+    animateCounter(topStreakEl, topS, '');
+    topStreakEl.classList.toggle('streak-active', topS >= 3);
+  }
+  const streakBarFill = document.getElementById('db-streak-bar-fill');
+  if (streakBarFill) {
+    const fillPct = Math.min(topS * 5, 100);
+    requestAnimationFrame(() => { streakBarFill.style.width = fillPct + '%'; });
+  }
+
+  // ── Quantum metric cards ──
+  const qmToday = document.getElementById('qm-today');
+  if (qmToday) animateCounter(qmToday, doneToday, '');
+
+  // 7-day avg rate across all habits
+  let totalRate = 0;
+  activeHabits.forEach(h => { totalRate += sevenDayRate(h.id); });
+  const avgRate = activeHabits.length > 0 ? Math.round(totalRate / activeHabits.length) : 0;
+  setTextSafe('qm-rate', avgRate + '%');
+
+  const qmStreak = document.getElementById('qm-streak');
+  if (qmStreak) animateCounter(qmStreak, topS, '');
+
+  // Total completions this month
+  const now = new Date();
+  const monthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  let monthTotal = 0;
+  Object.entries(APP.checkins).forEach(([date, data]) => {
+    if (date.startsWith(monthKey)) {
+      monthTotal += Object.values(data.completed || {}).filter(Boolean).length;
+    }
+  });
+  const qmMonth = document.getElementById('qm-month');
+  if (qmMonth) animateCounter(qmMonth, monthTotal, '');
+
+  // ── Habit orbit rings ──
+  renderOrbitRings(activeHabits, dayData, today);
+
+  // ── Pulse heatmap ──
+  renderPulseHeatmap(activeHabits);
+
+  // ── Leaderboard ──
+  renderStreakLeaderboard(activeHabits);
+
+  // ── Activity feed ──
+  renderActivityFeed(activeHabits);
+}
+
+function setTextSafe(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function animateCounter(el, target, suffix) {
+  const start = parseInt(el.textContent) || 0;
+  const duration = 600;
+  const startTime = performance.now();
+  function step(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(start + (target - start) * eased) + suffix;
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function renderOrbitRings(habits, dayData, today) {
+  const grid = document.getElementById('db-orbit-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  // Color map matching habit colorTag
+  const colorHex = { blue:'#3b82f6', purple:'#8b5cf6', cyan:'#06b6d4', green:'#22c55e', orange:'#f97316', indigo:'#6366f1', pink:'#ec4899', red:'#ef4444' };
+
+  habits.forEach(h => {
+    const rate = sevenDayRate(h.id); // 0-100
+    const isDoneToday = !!(dayData.completed[h.id]);
+    const streak = currentStreak(h.id);
+    const color = colorHex[h.colorTag] || '#6366f1';
+    const circ = 2 * Math.PI * 28; // r=28
+    const offset = circ - (rate / 100) * circ;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'orbit-ring-wrap';
+    wrap.setAttribute('title', `${h.name} — ${Math.round(rate)}% this week | streak: ${streak} days`);
+    wrap.innerHTML = `
+      <div class="relative" style="width:64px;height:64px">
+        <svg viewBox="0 0 64 64" width="64" height="64" style="transform:rotate(-90deg)">
+          <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/>
+          <circle cx="32" cy="32" r="28" fill="none" stroke="${color}" stroke-width="6"
+            stroke-linecap="round"
+            stroke-dasharray="${circ.toFixed(2)}"
+            stroke-dashoffset="${circ.toFixed(2)}"
+            data-target-offset="${offset.toFixed(2)}"
+            style="transition: stroke-dashoffset 1s cubic-bezier(.4,0,.2,1); filter: drop-shadow(0 0 4px ${color}80)"/>
+        </svg>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <span class="orbit-emoji">${h.emoji || '⭐'}</span>
+        </div>
+        ${isDoneToday ? `<div class="orbit-done-badge">✓</div>` : ''}
+      </div>
+      <span class="orbit-name">${h.name}</span>
+      <span style="font-size:0.65rem;color:#64748b">${Math.round(rate)}%</span>
+    `;
+    wrap.addEventListener('click', () => {
+      openDrawer(today);
+      // small highlight pulse
+      wrap.style.transform = 'scale(1.2)';
+      setTimeout(() => { wrap.style.transform = ''; }, 300);
+    });
+    grid.appendChild(wrap);
+
+    // Animate the ring arc after paint
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const arc = wrap.querySelector('[data-target-offset]');
+        if (arc) arc.style.strokeDashoffset = arc.dataset.targetOffset;
+      });
+    });
+  });
+
+  if (!habits.length) {
+    grid.innerHTML = '<p class="text-sm text-gray-500 col-span-full text-center py-6">No active habits. Add one to get started!</p>';
+  }
+}
+
+function renderPulseHeatmap(habits) {
+  const container = document.getElementById('db-pulse-heatmap');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const today = new Date();
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const key = dateFmt(d);
+    const data = APP.checkins[key] || { completed: {} };
+    const done = habits.filter(h => data.completed[h.id]).length;
+    const pct = habits.length > 0 ? done / habits.length : 0;
+
+    let bg;
+    if (pct === 0)       bg = 'rgba(55,65,81,0.5)';
+    else if (pct < 0.25) bg = 'rgba(99,102,241,0.25)';
+    else if (pct < 0.5)  bg = 'rgba(99,102,241,0.5)';
+    else if (pct < 0.75) bg = '#6366f1';
+    else if (pct < 1)    bg = 'rgba(99,102,241,0.9)';
+    else                 bg = 'linear-gradient(135deg,#6366f1,#06b6d4)';
+
+    const cell = document.createElement('div');
+    cell.className = 'pulse-cell';
+    cell.style.background = bg;
+    const isToday = key === dateFmt(new Date());
+    if (isToday) {
+      cell.style.outline = '2px solid rgba(99,102,241,0.8)';
+      cell.style.outlineOffset = '2px';
+    }
+    cell.title = `${key}: ${done}/${habits.length} completed`;
+    cell.addEventListener('click', () => openDrawer(key));
+    container.appendChild(cell);
+  }
+}
+
+function renderStreakLeaderboard(habits) {
+  const el = document.getElementById('db-leaderboard');
+  if (!el) return;
+
+  const ranked = habits
+    .map(h => ({ h, s: currentStreak(h.id) }))
+    .sort((a, b) => b.s - a.s)
+    .slice(0, 5);
+
+  const colorHex = { blue:'#3b82f6', purple:'#8b5cf6', cyan:'#06b6d4', green:'#22c55e', orange:'#f97316', indigo:'#6366f1', pink:'#ec4899', red:'#ef4444' };
+
+  el.innerHTML = ranked.map(({ h, s }, i) => {
+    const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
+    const color = colorHex[h.colorTag] || '#6366f1';
+    const barW = s > 0 ? Math.min(s * 4, 100) : 0;
+    return `
+      <div class="lb-row">
+        <span class="lb-rank ${rankClass}">${medal}</span>
+        <div style="width:28px;height:28px;border-radius:50%;background:${color}20;border:1px solid ${color}40;display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0">${h.emoji || '⭐'}</div>
+        <div class="flex-1 min-w-0">
+          <div class="text-sm font-medium text-gray-200 truncate" style="max-width:120px">${h.name}</div>
+          <div style="height:3px;border-radius:2px;background:rgba(255,255,255,0.06);margin-top:4px;overflow:hidden">
+            <div style="height:100%;width:${barW}%;background:${color};border-radius:2px;transition:width 1s ease"></div>
+          </div>
+        </div>
+        <span class="lb-streak">${s > 0 ? s + ' 🔥' : '—'}</span>
+      </div>`;
+  }).join('');
+}
+
+function renderActivityFeed(habits) {
+  const el = document.getElementById('db-activity-feed');
+  if (!el) return;
+
+  const colorHex = { blue:'#3b82f6', purple:'#8b5cf6', cyan:'#06b6d4', green:'#22c55e', orange:'#f97316', indigo:'#6366f1', pink:'#ec4899', red:'#ef4444' };
+
+  // Collect recent completions (last 7 days)
+  const events = [];
+  const today = new Date();
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const key = dateFmt(d);
+    const data = APP.checkins[key];
+    if (!data) continue;
+    habits.forEach(h => {
+      if (data.completed[h.id]) {
+        const isToday = i === 0;
+        events.push({ h, key, label: isToday ? 'Today' : i === 1 ? 'Yesterday' : key });
+      }
+    });
+  }
+
+  if (!events.length) {
+    el.innerHTML = '<p class="text-sm text-gray-500 text-center py-3">No activity yet. Start checking off habits!</p>';
+    return;
+  }
+
+  el.innerHTML = events.slice(0, 20).map(({ h, label }) => {
+    const color = colorHex[h.colorTag] || '#6366f1';
+    return `
+      <div class="feed-item">
+        <div class="feed-dot" style="background:${color};box-shadow:0 0 6px ${color}80"></div>
+        <span style="font-size:1rem">${h.emoji || '⭐'}</span>
+        <span class="flex-1 text-gray-300">${h.name}</span>
+        <span class="text-gray-500 text-xs">${label}</span>
+        <span style="color:#22c55e;font-size:0.75rem">✓ Done</span>
+      </div>`;
+  }).join('');
 }
 </script>
 </body>
